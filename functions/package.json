@@ -1,0 +1,26 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "nest build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:azure": "npm run build && npx func host start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@azure/functions": "^1.0.3",
+    "@nestjs/azure-func-http": "^0.10.0",
+    "@nestjs/common": "^11.0.6",
+    "@nestjs/core": "^11.0.6",
+    "@nestjs/platform-express": "^11.0.6",
+    "@schematics/angular": "^19.1.4",
+    "@types/yup": "^0.32.0",
+    "axios": "^1.7.9",
+    "azure-functions-core-tools": "^4.0.6821",
+    "yup": "^1.6.1"
+  }
+}
