@@ -14,3 +14,5 @@ step
 
 - cd functions
 - run npm run start:azure
+
+i assume this just for show case my apache airflow ability, so i didnt create complex validation
