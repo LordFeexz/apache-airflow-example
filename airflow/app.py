@@ -3,9 +3,6 @@ from airflow.models import DagBag
 from constant import DAG_ID
 from airflow.api.common.trigger_dag import trigger_dag
 from datetime import datetime, timezone
-from airflow.api.client.local_client import Client
-from database import initialize
-initialize()
 
 dag_bag = DagBag()
 app = Flask(__name__)

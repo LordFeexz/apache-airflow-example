@@ -1,73 +1,62 @@
 from airflow import DAG
-from database import get_connection
 from airflow.operators.python import PythonOperator
 from constant import DAG_ID
-from datetime import datetime
+from datetime import datetime, timezone
+import json
 
 
 def extract_data(**kwargs):
-    print(kwargs, "kwargs")
-    data = kwargs['dag_run'].conf
-    if not data:
-        raise Exception("No data received!")
-
-    return data
+    return kwargs.get('params')
 
 
 def transform_data(data):
-    # assume this process to transform data
     result = []
-    for item in data:
-        print(item, "item")
-        if item['age'] > 18:
+    if isinstance(data, str):
+        data = json.loads(data.replace("'", "\""))
+
+    if "datas" not in data:
+        raise Exception("Key 'datas' tidak ditemukan dalam payload!")
+
+    for item in data["datas"]:
+        if item["age"] > 18:
             result.append(item)
 
     return result
 
 
 def load_data(data):
-    print(data, "data")
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    for item in data:
-        cursor.execute("INSERT INTO users (name, age) VALUES (?, ?)",
-                       (item['name'],
-                        item['age']))
-
-    conn.commit()
-    conn.close()
+    try:
+        with open('dags/data.json', 'w') as json_file:
+            json.dump(data, json_file, indent=4)
+    except Exception as e:
+        print(f"Error while saving data to JSON: {e}")
+        raise
 
 
 with DAG(
     dag_id=DAG_ID,
     default_args={
         'owner': 'airflow',
-        'start_date': datetime(2023, 1, 1), },
+        'start_date': datetime.now().astimezone(timezone.utc),
+    },
     description='A simple example DAG',
     schedule_interval=None,
-    start_date=datetime.now(),
 ) as dag:
     extract_task = PythonOperator(
         task_id='extract_data',
         python_callable=extract_data,
-        provide_context=True,
     )
 
     transform_task = PythonOperator(
         task_id='transform_data',
         python_callable=transform_data,
-        provide_context=True,
-        op_kwargs={
-            'data': '{{ task_instance.xcom_pull(task_ids="extract_data") }}'},
+        op_args=['{{ ti.xcom_pull(task_ids="extract_data") }}'],
     )
 
     save_task = PythonOperator(
-        task_id='save_to_db',
+        task_id='save_data',
         python_callable=load_data,
-        provide_context=True,
-        op_kwargs={
-            'data': '{{ task_instance.xcom_pull(task_ids="transform_data") }}'},
+        op_args=['{{ ti.xcom_pull(task_ids="transform_data") }}'],
     )
 
     extract_task >> transform_task >> save_task
